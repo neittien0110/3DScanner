@@ -40,11 +40,23 @@ int WaitForAWhile = 0;
 // Số bước quay mỗi khi đợi
 int AngularStep = 2;
 
+
+// Direction of the rotary motion
+enum DirectionEnum{
+  Stop1=0,
+  Clockwise=1,      
+  Stop2=2,
+  CounterClockwise=3
+};
 // Huong chuyen dong thuan/nghich chieu kim dong ho
-byte dir = 0;
+DirectionEnum dir = 0;
 
 //continuous/waitforserial
 byte mode= 0;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//      THE MAIN SETUP / KHỞI TẠO
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void setup() {
   Serial.begin(9600);
   //Thông báo đây là LCD 1602
@@ -54,7 +66,7 @@ void setup() {
   // đặt con trỏ vào cột 0, dòng 1
   // Lưu ý: dòng 1 là dòng thứ 2, lòng 0 là dòng thứ 1. Nôm na, nó đếm từ 0 từ không phải từ 1
   lcd.setCursor(0, 0);
-  lcd.print("Chao ban");
+  lcd.print("3DScanner: Hi!");
 
   lcd.setCursor(0, 1);
   lcd.print("NguyenThanhNgan");
@@ -65,8 +77,9 @@ void setup() {
   velocity = 512;
   stepper.setSpeed(velocity);
 
-  //Thiet lap che do hoat dong
-  dir = 1;
+  //The init direction is clockwise
+  dir = Clockwise;
+  
   //Thiet lap mode lien tuc
   mode =0;
 
@@ -74,29 +87,43 @@ void setup() {
   lcd.setCursor(0, 0);
   lcd.print("       Velo=" + String(velocity) + "  ");  
   lcd.setCursor(0, 1);
-  lcd.print("Conti.. Sr: ");
+  lcd.print("Conti.. Sr:     ");
 }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//      ACTION AT AN ANGULAR  / Các xử lý cần thiết khi bàn xoay đã đến góc mong đợi
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void MyAction()
+{
+   Serial.println(Index);
+}
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//      THE MAIN LOOP / VÒNG LẶP CHÍNH
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void loop() {
-  if (dir == 1)
+  
+  //---------------CHANGE ROTATION DIRECTION-----------------------------
+  if (dir == Clockwise)
   {
     stepper.step(velocity >> AngularStep);
     lcd.setCursor(0, 0);
-    lcd.print("Clock  ");
+    lcd.print("ClockW ");
   } else if (dir == 3)
   {
     stepper.step(-velocity >> AngularStep);
     lcd.setCursor(0, 0);
-    lcd.print("C.Wise ");
+    lcd.print("CounCW ");
   }
+  // Send Index indicator to serial, in order to taking a photograph
   // Gửi kết quả ra serial để điều khiển chụp ảnh
   if (dir == 1 || dir == 3)
   {
     Index++;
     lcd.setCursor(11, 1);
     lcd.print(String(Index) + "  ");
-    Serial.println(Index);
-  }
-
+    MyAction();
+   }
 
   // Doc phim bam Key Down
   swValue = analogRead(joySW);
@@ -111,6 +138,8 @@ void loop() {
     dir = dir % 4;
   }
 
+
+  //---------------CHANGE VELOCITY-----------------------------
   yValue = analogRead(joyY);
   if ( yValue < 10 && velocity < 1024 )
   {
@@ -128,6 +157,7 @@ void loop() {
     lcd.print("Velo=" + String(velocity) + "  ");
   }
 
+  //---------------CHANGE MODE  CONTINUOUS/WAIT FOR SERIAL --------------------------
   xValue = analogRead(joyX);
   if ( xValue < 10 )
   {
@@ -155,4 +185,5 @@ void loop() {
          WaitForAWhile--;
      }
   }
+  //////////End of the main loop
 }
