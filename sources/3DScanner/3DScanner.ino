@@ -16,7 +16,6 @@
 #include <Stepper.h> // Include the header file
 // change this to the number of steps on your motor
 #define STEPS 32
-
 // create an instance of the stepper class using the steps and pins
 Stepper stepper(STEPS, 8, 10, 9, 11);  // ứng với chân IN1, IN2, IN3, In4 trên board ULN2003
 int velocity; // Toc do quay
@@ -106,12 +105,12 @@ void loop() {
   //---------------CHANGE ROTATION DIRECTION-----------------------------
   if (dir == Clockwise)
   {
-    stepper.step(velocity >> AngularStep);
+    stepper.step(velocity >> AngularStep);      //The step mottor rolls ịn journey
     lcd.setCursor(0, 0);
     lcd.print("ClockW ");
   } else if (dir == 3)
   {
-    stepper.step(-velocity >> AngularStep);
+    stepper.step(-velocity >> AngularStep);     //The step mottor rolls  ịn journey
     lcd.setCursor(0, 0);
     lcd.print("CounCW ");
   }
@@ -143,15 +142,16 @@ void loop() {
   yValue = analogRead(joyY);
   if ( yValue < 10 && velocity < 1024 )
   {
-    velocity = velocity + 20;
+    //The step should be 8, 16, 32.... Otherwise, the motion isn't smoothy after a few minutes.
+    //Bước nhảy phải dạng 2^, nếu không sau một vài phút thì chuyển động sẽ giật hoặc dừng.
+    velocity = velocity + 16;    
     stepper.setSpeed(velocity);
     lcd.setCursor(7, 0);
     lcd.print("Velo=" + String(velocity) + "  ");
   }
   if ( yValue > 1000 && velocity > 32 )
   {
-    velocity = velocity - 20;
-
+    velocity = velocity - 16;
     stepper.setSpeed(velocity);
     lcd.setCursor(7, 0);
     lcd.print("Velo=" + String(velocity) + "  ");
